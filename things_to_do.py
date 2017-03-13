@@ -3,7 +3,8 @@
 
 import os
 import sys
-import json # Consider using for file contents io
+import json
+import sqlite3 #Consider storing tasks in db instead of file
 
 class Task(object):
     def __init__(self, name, desc):
@@ -11,7 +12,7 @@ class Task(object):
         self.saved = False
     
     def get_optional_data(self):
-        print("Select one of the following to enter additional information or press Enter to continue: ")
+        print("Select one of the following to enter additional information or press Enter to finish: ")
         print("1. Due")
         print("2. Priority")
         print("3. Estimated Duration")
@@ -27,7 +28,23 @@ class Task(object):
                 self.contents['Estimated duration'] = str(input("Enter estimated duration: "))
                 continue
             else:
+                print("")
                 break
+
+    def print_task(self):
+        if self.saved:
+            print("Name: ", self.contents['name'])
+            print("Description: ", self.contents['description'])
+            print("Due: ", self.contents['due'])
+            print("Priority: ", self.contents['priority'])
+            print("Estimated Duration: ", self.contents['estimated_duration'])
+        elif not self.saved:
+            print("Unsaved:")
+            print("\tName: ", self.contents['name'])
+            print("\tDescription: ", self.contents['description'])
+            print("\tDue: ", self.contents['due'])
+            print("\tPriority: ", self.contents['priority'])
+            print("\tEstimated Duration: ", self.contents['estimated_duration'])
 
 filename = "/home/darrylb/darrylbckhm/mytasks.txt"
 
@@ -74,6 +91,7 @@ def load_tasks(filename):
                 old_tasks.append(Task(None, None))
                 for key in line:
                     old_tasks[-1].contents[key] = line[key]
+                    old_tasks[-1].saved = True
         f.close()
         num_tasks += len(old_tasks)
     else:
@@ -100,6 +118,7 @@ def update_task(name, key):
             print("Task not found!")
 
 def delete_task(name):
+    #need to add support for deleting task from file
     global old_tasks
     global new_tasks
     global num_tasks
@@ -119,16 +138,16 @@ def print_tasks():
     global old_tasks
     global new_tasks
 
+    print("Printing tasks!")
+    print("")
+
     for old_task in old_tasks:
-        print(old_task.contents)
+        old_task.print_task()
+        print("")
 
     for new_task in new_tasks:
-        if new_task.saved == True:
-            print(new_task.contents)
-
-    for new_task in new_tasks:
-        if new_task.saved == False:
-            print("Unsaved: ", new_task.contents)
+        new_task.print_task()
+        print("")
 
 def menu():
     print("1. Create New Task")
@@ -141,8 +160,10 @@ def menu():
     get_user_selection()
 
 def get_user_selection():
+    print("")
     while True:
         select = str(input("What would you like to do? "))
+        print("")
         if select == '1':
             name = str(input("Task name: "))
             desc = str(input("Task description: "))
