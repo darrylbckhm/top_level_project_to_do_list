@@ -10,7 +10,6 @@ class Task(object):
         self.contents = {'name': name, 'description': desc, 'due': None, 'priority': None, 'estimated_duration': None}
         self.saved = False
     
-    
     def get_optional_data(self):
         print("Select one of the following to enter additional information or press Enter to continue: ")
         print("1. Due")
@@ -31,13 +30,17 @@ class Task(object):
                 break
 
 filename = "/home/darrylb/darrylbckhm/mytasks.txt"
+
 old_tasks = []
 new_tasks = []
+num_tasks = 0
 
 def create_task(name, desc):
     global new_tasks
     global old_tasks
+    global num_tasks
     new_tasks.append(Task(name, desc))
+    num_tasks += 1
     new_tasks[-1].get_optional_data()
 
 def save_tasks(filename):
@@ -62,6 +65,7 @@ def save_tasks(filename):
 
 def load_tasks(filename):
     global old_tasks
+    global num_tasks
     if os.path.exists(filename):
         with open(filename, 'r') as f:
             contents = f.read().splitlines()
@@ -71,6 +75,7 @@ def load_tasks(filename):
                 for key in line:
                     old_tasks[-1].contents[key] = line[key]
         f.close()
+        num_tasks += len(old_tasks)
     else:
         print("No current task file!")
 
@@ -97,21 +102,18 @@ def update_task(name, key):
 def delete_task(name):
     global old_tasks
     global new_tasks
-    found = False
-    for old_task in old_tasks:
-        if name == old_task[name]:
-            found = True
-            del old_task
-            print(name, "has been deleted!")
-            break
-    for new_task in new_tasks:
-        if name == new_task[name]:
-            found = True
-            del new_task
-            print(name, "has been deleted!")
-            break
-    if not found:
-        print("Task was not found!")
+    global num_tasks
+    old_tasks[:] = [x for x in old_tasks if name != x.contents['name']]
+    if len(old_tasks) + len(new_tasks) < num_tasks:
+        num_tasks -= 1
+        print(name, "has been deleted!")
+        return
+    new_tasks[:] = [x for x in new_tasks if name != x.contents['name']]
+    if len(old_tasks) + len(new_tasks) < num_tasks:
+        num_tasks -= 1
+        print(name, "has been deleted!")
+        return
+    print(name, "was not found!")
 
 def print_tasks():
     global old_tasks
