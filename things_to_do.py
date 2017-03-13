@@ -7,11 +7,9 @@ import json # Consider using for file contents io
 
 class Task(object):
     def __init__(self, name, desc):
-        self.contents['name'] = name
-        self.contents['description'] = desc
+        self.contents = {'name': name, 'description': desc, 'due': None, 'priority': None, 'estimated_duration': None}
+        self.saved = False
     
-    saved = False
-    contents = {'name': None, 'description': None, 'due': None, 'priority': None, 'estimated_duration': None}
     
     def get_optional_data(self):
         print("Select one of the following to enter additional information or press Enter to continue: ")
