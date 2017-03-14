@@ -55,10 +55,28 @@ old_tasks = []
 new_tasks = []
 num_tasks = 0
 
-def create_task(name, desc):
+def create_task():
     global new_tasks
     global old_tasks
     global num_tasks
+
+    #I feel like there could be a better way to do this
+    while True:
+        name = str(input("Task name: "))
+        if not name:
+            print("Task must have name!")
+            continue
+        else:
+            break
+
+    while True:
+        desc = str(input("Task description: "))
+        if not desc:
+            print("Task must have description!")
+            continue
+        else:
+            break
+
     new_tasks.append(Task(name, desc))
     num_tasks += 1
     new_tasks[-1].get_optional_data()
@@ -67,29 +85,27 @@ def save_tasks(filename):
     global old_tasks
     global new_tasks
 
-    if not new_tasks:
-        return
-
     found = False
 
     if os.path.exists(filename):
         os.remove(filename)
 
-    with open(filename, 'a') as f:
-        for new_task in new_tasks:
+    if (new_tasks + old_tasks):
+        with open(filename, 'a') as f:
+            for new_task in new_tasks:
+                for old_task in old_tasks:
+                    if new_task.contents['name'] == old_task.contents['name']:
+                        found = True
+                        print("Task already exists!")
+                if not found:
+                    json.dump(new_task.contents, f)
+                    f.write('\n')
+                    new_task.saved = True
+                found = False
             for old_task in old_tasks:
-                if new_task.contents['name'] == old_task.contents['name']:
-                    found = True
-                    print("Task already exists!")
-            if not found:
-                json.dump(new_task.contents, f)
+                json.dump(old_task.contents, f)
                 f.write('\n')
-                new_task.saved = True
-            found = False
-        for old_task in old_tasks:
-            json.dump(old_task.contents, f)
-            f.write('\n')
-    f.close()
+        f.close()
 
 def load_tasks(filename):
     global old_tasks
@@ -105,7 +121,6 @@ def load_tasks(filename):
                     old_tasks[-1].saved = True
         f.close()
         num_tasks += len(old_tasks)
-        os.remove(filename)
     else:
         print("No current task file to load!")
         print("")
@@ -120,13 +135,13 @@ def search_tasks(string):
                 task.print_task()
                 break
 
-def update_task(name, key):
+def update_task(name, field):
     for task in (old_tasks+new_tasks):
         if name == task.contents['name']:
-            if task.contents[key]:
-                task.contents[key] = str(input("Update " + key + " in " + name + ": "))
-            else:
-                print("Invalid key!")
+            if field == "estimated duration":
+                field = "estimated_duration"
+            task.contents[field] = str(input("Update " + field + " in " + name + ": "))
+            task.saved = False
         else:
             print("Task not found!")
 
@@ -135,14 +150,27 @@ def delete_task(name):
     global old_tasks
     global new_tasks
     global num_tasks
+
+    if name == "*":
+        confirm = str(input("Warning, you are about to delete all tasks. Are you sure you want to do this? (y/N) ")).lower()
+        if confirm == "y":
+            new_tasks = []
+            old_tasks = []
+            save_tasks(filename)
+            print("All tasks deleted!")
+            return
+        return
+
     old_tasks[:] = [x for x in old_tasks if name != x.contents['name']]
     if len(old_tasks) + len(new_tasks) < num_tasks:
         num_tasks -= 1
+        save_tasks(filename)
         print(name, "has been deleted!")
         return
     new_tasks[:] = [x for x in new_tasks if name != x.contents['name']]
     if len(old_tasks) + len(new_tasks) < num_tasks:
         num_tasks -= 1
+        save_tasks(filename)
         print(name, "has been deleted!")
         return
     print(name, "was not found!")
@@ -184,9 +212,7 @@ def get_user_selection():
         select = str(input("What would you like to do? "))
         print("")
         if select == '1':
-            name = str(input("Task name: "))
-            desc = str(input("Task description: "))
-            create_task(name, desc)
+            create_task()
         elif select == '2':
             string = str(input("Keyword: "))
             search_tasks(string)
@@ -196,16 +222,13 @@ def get_user_selection():
             print_task_attributes()
             print("Enter the name of the field you would like to update from above")
             print("")
-            key = str(input("Field: ")).lower()
-            update_task(name, key)
+            field = str(input("Field: ")).lower()
+            update_task(name, field)
         elif select == '4':
             name = str(input("Task name: "))
             delete_task(name)
         elif select == '5':
-            if not new_tasks:
-                print("Tasks up to date!")
-            else:
-                save_tasks(filename)
+            save_tasks(filename)
         elif select == '6':
             print_tasks()
         elif select == '7':
@@ -213,7 +236,12 @@ def get_user_selection():
             sys.exit(0)
         menu()
 
+def process_input():
+    in_string = input()
+    return in_string
+
 if __name__ == "__main__":
+    print(process_input()*5)
     print("Welcome to your task manager!")
     print("")
     load_tasks(filename)
